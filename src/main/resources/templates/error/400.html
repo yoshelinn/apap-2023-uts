@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>400 bad request</title>
+  <object th:insert="~{fragments/fragment::css}" th:remove="tag"></object>
+  <object th:insert="~{fragments/fragment::js}" th:remove="tag"></object>
+</head>
+<body>
+<nav th:replace="~{fragments/fragment::navbar(~{::home})}"></nav>
+<div class="container-fluid">
+  <h2>400 bad request</h2>
+  <a th:href="@{/}">Kembali ke home</a>
+</div>
+</body>
+</html>
