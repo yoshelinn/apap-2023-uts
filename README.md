@@ -444,4 +444,102 @@ URL mapping: http://localhost:8080/lapor/{issueId}/update
 
 --------------------------------------------
 
-Fitur #5:
+Fitur #5:– Cari Ruangan menggunakan Nama Ruangan
+
+1. Controller buat ruangan (untuk melakukan pencarian):
+@Controller
+public class RoomController {
+
+    @Autowired
+    private RoomService roomService;
+
+    // Menampilkan halaman view all dengan search parameter
+    @GetMapping("/ruang/view-all")
+    public String viewAllRooms(@RequestParam(value = "search", required = false) String search, Model model) {
+        List<RoomModel> rooms;
+        if (search != null && !search.isEmpty()) {
+            rooms = roomService.searchRoomsByName(search);  // Panggil service untuk mencari ruangan
+        } else {
+            rooms = roomService.getAllRooms();  // Jika tidak ada pencarian, tampilkan semua ruangan
+        }
+        model.addAttribute("rooms", rooms);
+        model.addAttribute("search", search);  // Menyimpan kata pencarian di model untuk ditampilkan kembali
+        return "room/view-all";  // Menuju ke halaman view all rooms
+    }
+}
+
+2. service untuk melakukan pencarian
+@Service
+public class RoomService {
+
+    @Autowired
+    private RoomRepository roomRepository;
+
+    public List<RoomModel> getAllRooms() {
+        return roomRepository.findAll();
+    }
+
+    public List<RoomModel> searchRoomsByName(String name) {
+        return roomRepository.findByRoomNameContainingIgnoreCase(name);
+    }
+}
+
+3. tambahkan repositori
+public interface RoomRepository extends JpaRepository<RoomModel, Long> {
+    List<RoomModel> findByRoomNameContainingIgnoreCase(String roomName);
+}
+
+4. tambahkan search form di html search
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistem Ruangan</title>
+    <object th:insert="~{fragments/fragment::css}" th:remove="tag"></object>
+    <object th:insert="~{fragments/fragment::js}" th:remove="tag"></object>
+</head>
+<body>
+<nav th:replace="~{fragments/fragment::navbar(~{::home})}"></nav>
+
+<div class="container">
+    <h1>Daftar Ruangan</h1>
+
+    <!-- Form Pencarian -->
+    <form action="#" method="get">
+        <div class="form-inline">
+            <input type="text" name="search" class="form-control" placeholder="Cari Ruangan" th:value="${search}">
+            <button type="submit" class="btn btn-primary">Cari Ruangan</button>
+        </div>
+    </form>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>Room Number</th>
+                <th>Room Name</th>
+                <th>Building Name</th>
+                <th>Faculty</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="room, iter : ${rooms}">
+                <td th:text="${iter.count}"></td>
+                <td th:text="${room.roomNumber}"></td>
+                <td th:text="${room.roomName}"></td>
+                <td th:text="${room.buildingName}"></td>
+                <td th:text="${room.faculty}"></td>
+                <td>
+                    <a th:href="@{/ruang/detail/{id}(id=${room.roomId})}" class="btn btn-primary">Detail</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>
+
+URL = http://localhost:8080/ruang/view-all?search=Komputer
+--------------------------------------------
