@@ -542,4 +542,181 @@ public interface RoomRepository extends JpaRepository<RoomModel, Long> {
 </html>
 
 URL = http://localhost:8080/ruang/view-all?search=Komputer
+
 --------------------------------------------
+Fitur #6: Menghitung Interval Hari sejak Tanggal Dilaporkan
+1. add issue model
+import javax.persistence.*;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+
+@Entity
+@Table(name = "issue")
+public class IssueModel implements Serializable {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "issue_id")
+    private Long issueId;
+
+    @Column(name = "description")
+    private String description;
+
+    @Column(name = "reported_date")
+    private LocalDate reportedDate;
+
+    @Column(name = "reporter")
+    private String reporter;
+
+    @Column(name = "status")
+    private String status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id", referencedColumnName = "room_id")
+    private RoomModel room;
+
+    // Constructor kosong
+    public IssueModel() {
+        this.reportedDate = LocalDate.now(); // Default tanggal saat issue dilaporkan
+        this.status = "new";  // Default status adalah 'new'
+    }
+
+    // Getter dan Setter untuk semua field
+    public Long getIssueId() {
+        return issueId;
+    }
+
+    public void setIssueId(Long issueId) {
+        this.issueId = issueId;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public LocalDate getReportedDate() {
+        return reportedDate;
+    }
+
+    public void setReportedDate(LocalDate reportedDate) {
+        this.reportedDate = reportedDate;
+    }
+
+    public String getReporter() {
+        return reporter;
+    }
+
+    public void setReporter(String reporter) {
+        this.reporter = reporter;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public RoomModel getRoom() {
+        return room;
+    }
+
+    public void setRoom(RoomModel room) {
+        this.room = room;
+    }
+
+    // Transient field untuk menghitung jumlah hari tidak terselesaikan
+    @Transient
+    public long getUnresolvedDays() {
+        if (this.reportedDate != null) {
+            return ChronoUnit.DAYS.between(this.reportedDate, LocalDate.now());
+        }
+        return 0;
+    }
+}
+
+2. add controller
+@Controller
+public class ReportController {
+
+    @Autowired
+    private IssueService issueService;
+
+    // Menampilkan daftar masalah aktif
+    @GetMapping("/report/active")
+    public String viewActiveIssues(Model model) {
+        List<IssueModel> activeIssues = issueService.getActiveIssues();
+        model.addAttribute("issues", activeIssues);
+        return "report/active-issues";  // Menuju ke halaman view active issues
+    }
+}
+
+
+3.  Service untuk Mengambil Data Masalah Aktif
+@Service
+public class IssueService {
+
+    @Autowired
+    private IssueRepository issueRepository;
+
+    public List<IssueModel> getActiveIssues() {
+        return issueRepository.findByStatusIn(Arrays.asList("new", "in progress"));
+    }
+}
+
+4. repository untuk masalah aktif
+public interface IssueRepository extends JpaRepository<IssueModel, Long> {
+    List<IssueModel> findByStatusIn(List<String> statuses);
+}
+
+5. view di thymeleaf: active-issues
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Masalah Aktif</title>
+    <object th:insert="~{fragments/fragment::css}" th:remove="tag"></object>
+    <object th:insert="~{fragments/fragment::js}" th:remove="tag"></object>
+</head>
+<body>
+<nav th:replace="~{fragments/fragment::navbar(~{::home})}"></nav>
+
+<div class="container">
+    <h1>Daftar Masalah Aktif</h1>
+    
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Issue Id</th>
+                <th>Room Name</th>
+                <th>Description</th>
+                <th>Reported On</th>
+                <th>Status</th>
+                <th>Unresolved Days</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="issue : ${issues}">
+                <td th:text="${issue.issueId}"></td>
+                <td th:text="${issue.room.roomName}"></td>
+                <td th:text="${issue.description}"></td>
+                <td th:text="${issue.reportedDate}"></td>
+                <td th:text="${issue.status}"></td>
+                <td th:text="${issue.unresolvedDays}"></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>
+
+URL: http://localhost:8080/report/active
+
+
