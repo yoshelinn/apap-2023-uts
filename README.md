@@ -348,4 +348,100 @@ public class IssueController {
 URL mapping: http://<domain_name>:8080/ruang/{ruangId}/view
 
 ---------------------------------------------
-Fitur #4 Update Status Masalah
+Fitur #4 Update Status Masalah:
+1. Edit issue controller
+@Controller
+public class IssueController {
+
+    @Autowired
+    private IssueService issueService;
+
+    // Menampilkan form untuk update status
+    @GetMapping("/lapor/{issueId}/update")
+    public String showUpdateStatusForm(@PathVariable Long issueId, Model model) {
+        IssueModel issue = issueService.getIssueById(issueId);
+        model.addAttribute("issue", issue);
+        return "issue/update-status";  // Menuju ke halaman update status
+    }
+
+    // Menangani submit form update status
+    @PostMapping("/lapor/{issueId}/update")
+    public String updateIssueStatus(@PathVariable Long issueId, @ModelAttribute IssueModel issue, RedirectAttributes redirectAttributes) {
+        IssueModel existingIssue = issueService.getIssueById(issueId);
+        existingIssue.setStatus(issue.getStatus());  // Update status baru
+        issueService.saveIssue(existingIssue);
+        redirectAttributes.addFlashAttribute("success", "Status berhasil diubah.");
+        return "redirect:/ruang/" + existingIssue.getRoom().getRoomId() + "/view";
+    }
+}
+
+2. Form di thymeleaf: update-status
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Update Status Masalah</title>
+    <object th:insert="~{fragments/fragment::css}" th:remove="tag"></object>
+    <object th:insert="~{fragments/fragment::js}" th:remove="tag"></object>
+</head>
+<body>
+<nav th:replace="~{fragments/fragment::navbar(~{::home})}"></nav>
+
+<div class="container">
+    <h1>Update Status Masalah</h1>
+
+    <form action="#" th:action="@{/lapor/{issueId}/update(issueId=${issue.issueId})}" th:object="${issue}" method="post">
+        <div class="form-group">
+            <label for="description">Deskripsi</label>
+            <input type="text" class="form-control" id="description" th:field="*{description}" readonly>
+        </div>
+
+        <div class="form-group">
+            <label for="reporter">Pelapor</label>
+            <input type="text" class="form-control" id="reporter" th:field="*{reporter}" readonly>
+        </div>
+
+        <div class="form-group">
+            <label for="status">Status</label>
+            <select class="form-control" id="status" th:field="*{status}">
+                <option value="new" th:selected="${issue.status == 'new'}">New</option>
+                <option value="in progress" th:selected="${issue.status == 'in progress'}">In Progress</option>
+                <option value="done" th:selected="${issue.status == 'done'}">Done</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <a href="#" th:href="@{/ruang/{roomId}/view(roomId=${issue.room.roomId})}" class="btn btn-secondary">Back</a>
+    </form>
+</div>
+
+</body>
+</html>
+
+3. Lengkapi issue service
+@Service
+public class IssueService {
+
+    @Autowired
+    private IssueRepository issueRepository;
+
+    public IssueModel getIssueById(Long issueId) {
+        return issueRepository.findById(issueId).orElseThrow(() -> new IllegalArgumentException("Issue not found"));
+    }
+
+    public void saveIssue(IssueModel issue) {
+        issueRepository.save(issue);
+    }
+}
+
+4. buat repository
+public interface IssueRepository extends JpaRepository<IssueModel, Long> {
+}
+
+5. flash messages di html: 
+<div class="alert alert-success" th:text="${success}" th:if="${success}"></div>
+URL mapping: http://localhost:8080/lapor/{issueId}/update
+
+--------------------------------------------
+
+Fitur #5:
