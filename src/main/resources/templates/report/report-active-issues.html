@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Lihat Semua Kasus - UTS APAP 2023</title>
+    <object th:include="fragments/fragment :: css" th:remove="tag"></object>
+    <object th:include="fragments/fragment :: js" th:remove="tag"></object>
+</head>
+<body>
+<nav th:replace="fragments/fragment :: navbar(laporan)"></nav>
+
+<div class="container">
+
+    <div class="alert alert-primary" role="alert" th:text="${success}" th:if="${success}"></div>
+    <div class="alert alert-danger" role="alert" th:text="${error}" th:if="${error}"></div>
+
+    <table id="table_result" class="display" style="width:100%">
+        <thead>
+        <tr>
+            <th>Issue Id</th>
+            <th>Room Number</th>
+            <th>Description</th>
+            <th>Reported On</th>
+            <th>Reported By</th>
+            <th>Status</th>
+            <th>Unresolved days</th>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

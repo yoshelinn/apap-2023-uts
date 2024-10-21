@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tambah Kasus - UTS APAP 2023</title>
+    <object th:insert="~{fragments/fragment::css}" th:remove="tag"></object>
+    <object th:insert="~{fragments/fragment::js}" th:remove="tag"></object>
+</head>
+<body>
+<nav th:replace="~{fragments/fragment::navbar(~{::home})}"></nav>
+
+<div class="container">
+    <div class="card m-4 p-4">
+        <div class="card-body">
+            <div class="justify-content-center">
+                <h2 class="mb-4">Tambah Ruangan</h2>
+                <form th:action="@{/ruang/add}" th:object="${roomModel}" method="POST">
+                    <input class="form-control" type="hidden" th:field="*{roomId}" readonly/>
+
+                    <div class="form-group row">
+                        <label for="roomNumber" class="col-4 col-form-label">Nomor/Kode Ruangan</label>
+                        <div class="col-8">
+                            <input id="roomNumber" th:field="*{roomNumber}" placeholder="nomor/kode ruangan seperti A.1101" type="text" class="form-control" required="required">
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="roomName" class="col-4 col-form-label">Nama Ruangan</label>
+                        <div class="col-8">
+                            <input id="roomName" th:field="*{roomName}" placeholder="nama lengkap" type="text" class="form-control" required="required">
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="buildingName" class="col-4 col-form-label">Nama Gedung</label>
+                        <div class="col-8">
+                            <input id="buildingName" th:field="*{buildingName}" placeholder="nama gedung" type="text" class="form-control" required="required">
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="faculty" class="col-4 col-form-label">Fakultas</label>
+                        <div class="col-8">
+                            <select id="faculty" th:field="*{faculty}" class="custom-select">
+                                <option th:each="option : ${listService.getFakultasOptionsList()}"
+                                        th:value="${option}" th:text="${option}">
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="offset-4 col-2">
+                            <button name="save" type="submit" class="btn btn-primary">Submit</button>
+                        </div>
+                        <div class="col-2">
+                            <a class="btn btn-primary" href="/">Back</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

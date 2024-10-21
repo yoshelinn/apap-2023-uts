@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Lihat Semua Kasus - UTS APAP 2023</title>
+    <object th:include="fragments/fragment :: css" th:remove="tag"></object>
+    <object th:include="fragments/fragment :: js" th:remove="tag"></object>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"
+            integrity="sha512-ElRFoEQdI5Ht6kZvyzXhYG9NqjtkmlkfYk0wr6wHxU9JEHakS7UJZNeml5ALk+8IKlU6jDgMabC3vkumRokgJA=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+<nav th:replace="fragments/fragment :: navbar(statistik)"></nav>
+
+<div class="container">
+
+    <h1 class="mt-4 py-4">Statistik Kasus Aktif per Fakultas</h1>
+
+    <table id="table_result" class="display" style="width:100%">
+        <thead>
+        <tr>
+            <th>Fakultas</th>
+            <th>Jumlah Kasus</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>Data 1</td>
+            <td>Data 2</td>
+        </tr>
+        </tbody>
+    </table>
+
+
+    <h2 class="mt-4 py-4">Chart</h2>
+    <div class="chart-container pb-5 mb-5" style="width:80%">
+        <canvas id="myChart"></canvas>
+    </div>
+</div>
+
+
+</body>
+</html>

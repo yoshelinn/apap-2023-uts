@@ -4,14 +4,22 @@
     <meta charset="UTF-8">
     <title>UTS - 1234567890</title>
     <object th:insert="~{fragments/fragment::css}" th:remove="tag"></object>
-    <object th:insert="~{fragments/fragment::js}" th:remove="tag"></object>
-</head>
+    <object th:insert="~{fragments/fragment::js}" th:remove="tag"></object></head>
 <body>
 <nav th:replace="~{fragments/fragment::navbar(~{::home})}"></nav>
 
 <div class="d-flex justify-content-center">
     <div class="m-4">
-        <h2 class="pb-5">UTS APAP 2023</h2>
+        <h2 class="pb-5">Sistem Ruangan</h2>
+        <div class="d-flex justify-content-center">
+            <a th:href="@{/ruang/view-all}" class="mx-2 btn btn-outline-primary">Lihat Semua Ruangan</a>
+            <a th:href="@{/ruang/add}" class="mx-2 btn btn-outline-primary">Tambah Ruangan</a>
+        </div>
+        <div class="my-3 d-flex justify-content-center">
+            <a th:href="@{/lapor/active}" class="mx-2 btn btn-outline-primary">Lihat Semua Masalah</a>
+            <a th:href="@{/report/active}" class="mx-2 btn btn-outline-primary">Lihat Masalah aktif</a>
+            <a th:href="@{/report/statistics}" class="mx-2 btn btn-outline-primary">Statistik kasus</a>
+        </div>
     </div>
 </div>
 

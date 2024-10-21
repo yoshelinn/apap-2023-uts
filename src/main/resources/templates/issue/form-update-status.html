@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tambah Kasus - UTS APAP 2023</title>
+    <object th:insert="~{fragments/fragment::css}" th:remove="tag"></object>
+    <object th:insert="~{fragments/fragment::js}" th:remove="tag"></object>
+</head>
+<body>
+<nav th:replace="~{fragments/fragment::navbar(~{::home})}"></nav>
+
+<div class="container">
+    <div class="card m-4 p-4">
+        <div class="card-body">
+            <div class="justify-content-center">
+                <h2 class="mb-4">Update Status Masalah</h2>
+                <form th:action="@{/lapor/update}" th:object="${issueModel}" method="POST">
+                    <input class="form-control" type="hidden" th:field="*{issueId}" readonly/>
+
+                    <div class="form-group row">
+                        <label for="nik" class="col-4 col-form-label">description</label>
+                        <div class="col-8">
+                            <input id="nik" th:field="*{description}" placeholder="berikan laporan rinci" type="text" class="form-control" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="nama" class="col-4 col-form-label">reportedBy</label>
+                        <div class="col-8">
+                            <input id="nama" th:field="*{reportedBy}" placeholder="nama lengkap" type="text" class="form-control" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="reportedOn" class="col-4 col-form-label">Reported on</label>
+                        <div class="col-8">
+                            <input id="reportedOn" th:field="*{reportedOn}" type="date" class="form-control" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="status" class="col-4 col-form-label">Status</label>
+                        <div class="col-8">
+                            <select id="status" th:field="*{status}" class="custom-select">
+                                <option th:each="option : ${listService.getStatusOptionsList()}"
+                                        th:value="${option}" th:text="${option}">
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="offset-4 col-2">
+                            <button name="save" type="submit" class="btn btn-primary">Submit</button>
+                        </div>
+                        <div class="col-2">
+                            <a class="btn btn-primary" href="/">Back</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
