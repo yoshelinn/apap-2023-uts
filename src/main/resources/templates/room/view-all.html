@@ -2,7 +2,7 @@
 <html lang="en" xmlns:th="http://thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Lihat Semua Kasus - UTS APAP 2023</title>
+    <title>Lihat Semua Ruangan - UTS APAP 2023</title>
     <object th:insert="~{fragments/fragment::css}" th:remove="tag"></object>
     <object th:insert="~{fragments/fragment::js}" th:remove="tag"></object>
 </head>
@@ -11,9 +11,13 @@
 
 <div class="container">
 
+    <!-- Success message alert -->
     <div class="alert alert-primary" role="alert" th:text="${success}" th:if="${success}"></div>
+
+    <!-- Error message alert -->
     <div class="alert alert-danger" role="alert" th:text="${error}" th:if="${error}"></div>
 
+    <!-- Table of rooms -->
     <table class="table">
         <thead>
         <tr>
@@ -26,6 +30,17 @@
         </tr>
         </thead>
         <tbody>
+        <!-- Iterating over the rooms and displaying each room's details -->
+        <tr th:each="room : ${rooms}">
+            <td th:text="${room.roomId}"></td>
+            <td th:text="${room.roomNumber}"></td>
+            <td th:text="${room.roomName}"></td>
+            <td th:text="${room.buildingName}"></td>
+            <td th:text="${room.faculty}"></td>
+            <td>
+                <a th:href="@{/ruang/detail/{id}(id=${room.roomId})}" class="btn btn-primary">Detail</a>
+            </td>
+        </tr>
         </tbody>
     </table>
 </div>
