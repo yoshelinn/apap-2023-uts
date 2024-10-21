@@ -96,3 +96,106 @@ public class RoomController {
 </html>
 
 6. url mapping: http://localhost:8080/ruang/view-all
+
+----------------------------------------------
+
+Fitur #2. Menambah data Ruangan baru 
+
+1. Buat form di thymeleaf: room/form-add
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tambah Ruangan</title>
+    <object th:insert="~{fragments/fragment::css}" th:remove="tag"></object>
+    <object th:insert="~{fragments/fragment::js}" th:remove="tag"></object>
+</head>
+<body>
+<nav th:replace="~{fragments/fragment::navbar(~{::home})}"></nav>
+
+<div class="container">
+    <h1>Tambah Ruangan</h1>
+
+    <form action="#" th:action="@{/ruang/add}" th:object="${room}" method="post">
+        <div class="form-group">
+            <label for="roomNumber">Nomor/Kode Ruangan</label>
+            <input type="text" class="form-control" id="roomNumber" th:field="*{roomNumber}" placeholder="Masukkan nomor/kode ruangan" required>
+        </div>
+
+        <div class="form-group">
+            <label for="roomName">Nama Ruangan</label>
+            <input type="text" class="form-control" id="roomName" th:field="*{roomName}" placeholder="Masukkan nama ruangan" required>
+        </div>
+
+        <div class="form-group">
+            <label for="buildingName">Nama Gedung</label>
+            <input type="text" class="form-control" id="buildingName" th:field="*{buildingName}" placeholder="Masukkan nama gedung" required>
+        </div>
+
+        <div class="form-group">
+            <label for="faculty">Fakultas</label>
+            <select class="form-control" id="faculty" th:field="*{faculty}">
+                <option value="FASILKOM">FASILKOM</option>
+                <option value="FK">FK</option>
+                <option value="FT">FT</option>
+                <option value="FISIP">FISIP</option>
+                <option value="FIB">FIB</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <a href="#" th:href="@{/ruang/view-all}" class="btn btn-secondary">Back</a>
+    </form>
+</div>
+</body>
+</html>
+
+2. Bikin endpoint buat handle form submission 
+@Controller
+public class RoomController {
+
+    @Autowired
+    private RoomService roomService;
+
+    // Menampilkan form tambah ruangan
+    @GetMapping("/ruang/add")
+    public String showAddRoomForm(Model model) {
+        model.addAttribute("room", new RoomModel());
+        return "room/add-room";
+    }
+
+    // Menangani submit form untuk menambah ruangan
+    @PostMapping("/ruang/add")
+    public String addRoom(@ModelAttribute RoomModel room, RedirectAttributes redirectAttributes) {
+        roomService.saveRoom(room);
+        redirectAttributes.addFlashAttribute("success", "Ruangan berhasil disimpan dengan id " + room.getRoomId());
+        return "redirect:/ruang/view-all";
+    }
+}
+
+3. Room service buat nyimpen ruangan baru
+@Service
+public class RoomService {
+
+    @Autowired
+    private RoomRepository roomRepository;
+
+    public void saveRoom(RoomModel room) {
+        roomRepository.save(room);
+    }
+
+    public List<RoomModel> getAllRooms() {
+        return roomRepository.findAll();
+    }
+}
+
+4. RoomRepository
+public interface RoomRepository extends JpaRepository<RoomModel, Long> {
+}
+
+5. Di bagian controller, gunakan redirectattributes, dan jg halaman dialihkan ke "view-all".
+redirectAttributes.addFlashAttribute("success", "Ruangan berhasil disimpan dengan id " + room.getRoomId());
+
+6. Pada halaman view-all.html, tambahkan kode ini untuk menampilkan pesan berhasil:
+<div class="alert alert-success" th:text="${success}" th:if="${success}"></div>
+URL = http://localhost:8080/ruang/add
