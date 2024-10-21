@@ -199,3 +199,153 @@ redirectAttributes.addFlashAttribute("success", "Ruangan berhasil disimpan denga
 6. Pada halaman view-all.html, tambahkan kode ini untuk menampilkan pesan berhasil:
 <div class="alert alert-success" th:text="${success}" th:if="${success}"></div>
 URL = http://localhost:8080/ruang/add
+
+---------------------------------------------
+
+Fitur #3 Menambahkan masalah barang rusak per ruangan:
+1. Menambahkan issue model:
+@Entity
+@Table(name = "issue")
+public class IssueModel implements Serializable {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "issue_id")
+    private Long issueId;
+
+    @Column(name = "description")
+    private String description;
+
+    @Column(name = "reported_date")
+    private LocalDate reportedDate;
+
+    @Column(name = "reporter")
+    private String reporter;
+
+    @Column(name = "status")
+    private String status = "new";
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id", referencedColumnName = "room_id")
+    private RoomModel room;
+
+    // Getter dan Setter
+}
+
+2. Buat repository untuk mengelola data issue:
+public interface IssueRepository extends JpaRepository<IssueModel, Long> {
+}
+
+3. Service untuk menyimpan data masalah barang rusak:
+@Service
+public class IssueService {
+
+    @Autowired
+    private IssueRepository issueRepository;
+
+    public void saveIssue(IssueModel issue) {
+        issue.setReportedDate(LocalDate.now()); // Set tanggal otomatis
+        issue.setStatus("new"); // Set status otomatis
+        issueRepository.save(issue);
+    }
+
+    public List<IssueModel> getIssuesByRoom(RoomModel room) {
+        return issueRepository.findByRoom(room);
+    }
+}
+
+4. Controller untuk Form Issue:
+@Controller
+public class IssueController {
+
+    @Autowired
+    private IssueService issueService;
+
+    @Autowired
+    private RoomService roomService;
+
+    // Menampilkan halaman detail ruangan beserta daftar masalah
+    @GetMapping("/ruang/{ruangId}/view")
+    public String viewRoomIssues(@PathVariable Long ruangId, Model model) {
+        RoomModel room = roomService.getRoomById(ruangId);
+        List<IssueModel> issues = issueService.getIssuesByRoom(room);
+        
+        model.addAttribute("room", room);
+        model.addAttribute("issues", issues);
+        model.addAttribute("issue", new IssueModel());
+        return "room/detail";
+    }
+
+    // Menangani form submit untuk menambahkan masalah barang rusak
+    @PostMapping("/ruang/{ruangId}/view")
+    public String addIssue(@PathVariable Long ruangId, @ModelAttribute IssueModel issue, RedirectAttributes redirectAttributes) {
+        RoomModel room = roomService.getRoomById(ruangId);
+        issue.setRoom(room);
+        issueService.saveIssue(issue);
+        redirectAttributes.addFlashAttribute("success", "Laporan masalah berhasil disimpan.");
+        return "redirect:/ruang/" + ruangId + "/view";
+    }
+}
+
+5. Form, buat form di halaman detail ruangan untuk menambahkan laporan masalah:
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Detail Ruangan</title>
+    <object th:insert="~{fragments/fragment::css}" th:remove="tag"></object>
+    <object th:insert="~{fragments/fragment::js}" th:remove="tag"></object>
+</head>
+<body>
+<nav th:replace="~{fragments/fragment::navbar(~{::home})}"></nav>
+
+<div class="container">
+    <h1>Detail Ruangan</h1>
+
+    <p>Nomor Ruangan: <span th:text="${room.roomNumber}"></span></p>
+    <p>Nama Ruangan: <span th:text="${room.roomName}"></span></p>
+    <p>Nama Gedung: <span th:text="${room.buildingName}"></span></p>
+    <p>Fakultas: <span th:text="${room.faculty}"></span></p>
+
+    <h2>Daftar Masalah</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Deskripsi</th>
+                <th>Tanggal Dilaporkan</th>
+                <th>Pelapor</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="issue : ${issues}">
+                <td th:text="${issue.description}"></td>
+                <td th:text="${issue.reportedDate}"></td>
+                <td th:text="${issue.reporter}"></td>
+                <td th:text="${issue.status}"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Buat Laporan Masalah</h2>
+    <form action="#" th:action="@{/ruang/{ruangId}/view(ruangId=${room.roomId})}" th:object="${issue}" method="post">
+        <div class="form-group">
+            <label for="description">Deskripsi Masalah</label>
+            <input type="text" class="form-control" id="description" th:field="*{description}" placeholder="Masukkan deskripsi masalah" required>
+        </div>
+
+        <div class="form-group">
+            <label for="reporter">Pelapor</label>
+            <input type="text" class="form-control" id="reporter" th:field="*{reporter}" placeholder="Masukkan nama pelapor" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
+
+</body>
+</html>
+URL mapping: http://<domain_name>:8080/ruang/{ruangId}/view
+
+---------------------------------------------
+Fitur #4 Update Status Masalah
