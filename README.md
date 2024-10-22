@@ -718,5 +718,190 @@ public interface IssueRepository extends JpaRepository<IssueModel, Long> {
 </html>
 
 URL: http://localhost:8080/report/active
+----------------------------------------------
+Fitur #7: Daftar Masalah Aktif Menggunakan Datatables 
 
+URL mapping: http://localhost:8080/report/active
+REST API mapping: http://localhost:8080/api/lapor/active
 
+1. Controller untuk REST API
+Kamu perlu membuat controller khusus yang menyediakan data masalah aktif dalam format JSON.
+
+java
+Salin kode
+@RestController
+@RequestMapping("/api/lapor")
+public class ReportRestController {
+
+    @Autowired
+    private IssueService issueService;
+
+    @GetMapping("/active")
+    public List<IssueModel> getActiveIssues() {
+        return issueService.getActiveIssues();  // Mengembalikan daftar masalah aktif
+    }
+}
+2. Service untuk Mengambil Data Masalah Aktif
+Service ini akan mengambil data masalah yang statusnya "new" atau "in progress".
+
+java
+Salin kode
+@Service
+public class IssueService {
+
+    @Autowired
+    private IssueRepository issueRepository;
+
+    public List<IssueModel> getActiveIssues() {
+        return issueRepository.findByStatusIn(Arrays.asList("new", "in progress"));
+    }
+}
+3. Repository untuk Mengambil Data
+Tambahkan query repository untuk mengambil masalah aktif berdasarkan status:
+
+java
+Salin kode
+public interface IssueRepository extends JpaRepository<IssueModel, Long> {
+    List<IssueModel> findByStatusIn(List<String> statuses);
+}
+4. Konfigurasi JSON Response
+Pastikan IssueModel di-serialize dengan benar ke format JSON, dan informasi yang diinginkan (seperti unresolvedDays) juga dikirimkan.
+import javax.persistence.*;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+
+@Entity
+@Table(name = "issue")
+public class IssueModel implements Serializable {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "issue_id")
+    private Long issueId;
+
+    @Column(name = "description")
+    private String description;
+
+    @Column(name = "reported_date")
+    private LocalDate reportedDate;
+
+    @Column(name = "reporter")
+    private String reporter;
+
+    @Column(name = "status")
+    private String status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id", referencedColumnName = "room_id")
+    private RoomModel room;
+
+    // Constructor kosong
+    public IssueModel() {
+        this.reportedDate = LocalDate.now(); // Set tanggal otomatis saat issue dilaporkan
+        this.status = "new"; // Status default adalah 'new'
+    }
+
+    // Getter dan Setter untuk semua field
+    public Long getIssueId() {
+        return issueId;
+    }
+
+    public void setIssueId(Long issueId) {
+        this.issueId = issueId;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public LocalDate getReportedDate() {
+        return reportedDate;
+    }
+
+    public void setReportedDate(LocalDate reportedDate) {
+        this.reportedDate = reportedDate;
+    }
+
+    public String getReporter() {
+        return reporter;
+    }
+
+    public void setReporter(String reporter) {
+        this.reporter = reporter;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public RoomModel getRoom() {
+        return room;
+    }
+
+    public void setRoom(RoomModel room) {
+        this.room = room;
+    }
+
+    // Transient field untuk menghitung jumlah hari tidak terselesaikan
+    @Transient
+    public long getUnresolvedDays() {
+        if (this.reportedDate != null) {
+            return ChronoUnit.DAYS.between(this.reportedDate, LocalDate.now());
+        }
+        return 0;
+    }
+}
+
+5. Response API
+Ketika kamu mengakses URL seperti ini:
+
+bash
+Salin kode
+http://localhost:8080/api/lapor/active
+Kamu akan mendapatkan respons JSON dengan format seperti ini:
+
+json
+Salin kode
+[
+    {
+        "issueId": 1005,
+        "description": "Mic Dosen Rusak Semua",
+        "reporter": "Susi",
+        "reportedDate": "2023-10-17",
+        "status": "new",
+        "room": {
+            "roomId": 1,
+            "roomNumber": "B.1101",
+            "roomName": "Lab Bahasa 1",
+            "buildingName": "Gedung B",
+            "faculty": "FIB"
+        },
+        "unresolvedDays": 0
+    },
+    {
+        "issueId": 1002,
+        "description": "Meja Dosen Rusak",
+        "reporter": "Budi",
+        "reportedDate": "2023-10-10",
+        "status": "in progress",
+        "room": {
+            "roomId": 2,
+            "roomNumber": "A.1101",
+            "roomName": "Lab Komputer 1",
+            "buildingName": "Gedung A",
+            "faculty": "FASILKOM"
+        },
+        "unresolvedDays": 7
+    }
+]
+
+---------------------------------------------
