@@ -1152,3 +1152,75 @@ public class IssueService {
 2. **Testability**: Constructor Injection lebih mudah untuk diujikan karena kamu bisa dengan mudah membuat instance menggunakan mock tanpa memerlukan Spring Context.
 3. **Null Safety**: Dengan Constructor Injection, kamu dapat memaksa dependensi disediakan pada saat pembuatan objek, sehingga menghindari `NullPointerException`.
 
+---------------------------------------------
+
+### Fitur #11 – Unit Testing dengan Mockito
+Untuk fitur ini, kita akan menggunakan **JUnit** dan **Mockito** untuk membuat unit test yang memastikan bahwa perhitungan statistik per fakultas dihitung dengan benar.
+
+#### 1. **Menambahkan Dependensi Mockito**
+Jika kamu belum menambahkan Mockito di project Spring Boot kamu, tambahkan dependensi ini di file `build.gradle`:
+
+```groovy
+dependencies {
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.mockito:mockito-core'
+}
+```
+
+#### 2. **Contoh Unit Test untuk Statistik Per Fakultas**
+Misalnya kita ingin menguji metode `getStatisticsByFaculty()` di `IssueService`.
+
+```java
+@RunWith(MockitoJUnitRunner.class)
+public class IssueServiceTest {
+
+    @Mock
+    private IssueRepository issueRepository;
+
+    @InjectMocks
+    private IssueService issueService;
+
+    @Test
+    public void testGetStatisticsByFaculty() {
+        // Mock data yang akan dikembalikan oleh repository
+        List<Object[]> mockResults = Arrays.asList(
+                new Object[]{"FASILKOM", 2L},
+                new Object[]{"FIB", 1L}
+        );
+        Mockito.when(issueRepository.countActiveIssuesByFaculty()).thenReturn(mockResults);
+
+        // Panggil metode yang ingin diuji
+        List<StatisticsResponse> statistics = issueService.getStatisticsByFaculty();
+
+        // Verifikasi bahwa hasil statistik sesuai dengan mock
+        assertEquals(2, statistics.size());
+        assertEquals("FASILKOM", statistics.get(0).getFakultas());
+        assertEquals(2L, statistics.get(0).getJumlahKasus());
+        assertEquals("FIB", statistics.get(1).getFakultas());
+        assertEquals(1L, statistics.get(1).getJumlahKasus());
+    }
+}
+```
+
+#### Penjelasan:
+1. **`@Mock`**: Membuat mock dari `IssueRepository` menggunakan Mockito.
+2. **`@InjectMocks`**: Spring akan otomatis meng-inject mock `IssueRepository` ke dalam `IssueService`.
+3. **`Mockito.when()`**: Menentukan apa yang akan dikembalikan oleh `issueRepository.countActiveIssuesByFaculty()` saat dipanggil.
+4. **`assertEquals()`**: Memastikan bahwa hasil perhitungan statistik sesuai dengan mock data yang kita berikan.
+
+#### 3. **Menjalankan Unit Test**
+Untuk menjalankan test ini, kamu bisa menggunakan IDE seperti IntelliJ IDEA atau Eclipse, atau dengan perintah berikut di terminal:
+
+```bash
+./gradlew test
+```
+
+Jika kamu ingin menjalankan test di satu file tertentu, tambahkan path ke file tersebut.
+
+---
+
+### Kesimpulan:
+1. **Fitur #10**: Constructor Injection lebih baik untuk Dependency Injection karena memberikan lebih banyak kontrol, keamanan, dan kemudahan dalam pengujian.
+2. **Fitur #11**: Gunakan **Mockito** untuk membuat mock dependencies seperti repository dan **JUnit** untuk melakukan verifikasi logika dalam unit test. 
+
+Jika ada yang masih kurang jelas atau butuh bantuan untuk implementasi lainnya, beri tahu saja!
