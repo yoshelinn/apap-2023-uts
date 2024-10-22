@@ -906,3 +906,249 @@ Salin kode
 
 ---------------------------------------------
 
+
+Fitur #8 dan Fitur #9 (Statistik Jumlah Kasus Aktif per Fakultas) dengan datatables
+
+### 1. **REST API untuk Statistik Kasus Aktif per Fakultas**
+   Pertama, kamu perlu membuat REST API yang mengembalikan jumlah kasus aktif per fakultas dalam format JSON.
+
+#### **Controller untuk REST API**
+```java
+@RestController
+@RequestMapping("/api/lapor")
+public class ReportRestController {
+
+    @Autowired
+    private IssueService issueService;
+
+    // Mengembalikan statistik kasus aktif per fakultas
+    @GetMapping("/statistics")
+    public List<StatisticsResponse> getStatistics() {
+        return issueService.getStatisticsByFaculty();
+    }
+}
+```
+
+#### **DTO untuk Response Statistik**
+Buatlah DTO (Data Transfer Object) untuk mengembalikan data statistik.
+
+```java
+public class StatisticsResponse {
+    private String fakultas;
+    private long jumlahKasus;
+
+    // Constructor, Getter, and Setter
+    public StatisticsResponse(String fakultas, long jumlahKasus) {
+        this.fakultas = fakultas;
+        this.jumlahKasus = jumlahKasus;
+    }
+
+    public String getFakultas() {
+        return fakultas;
+    }
+
+    public void setFakultas(String fakultas) {
+        this.fakultas = fakultas;
+    }
+
+    public long getJumlahKasus() {
+        return jumlahKasus;
+    }
+
+    public void setJumlahKasus(long jumlahKasus) {
+        this.jumlahKasus = jumlahKasus;
+    }
+}
+```
+
+#### **Service untuk Mengambil Statistik Kasus Aktif per Fakultas**
+Di service, tambahkan logika untuk menghitung jumlah kasus aktif (status "new" dan "in progress") per fakultas.
+
+```java
+@Service
+public class IssueService {
+
+    @Autowired
+    private IssueRepository issueRepository;
+
+    // Mendapatkan statistik jumlah kasus aktif per fakultas
+    public List<StatisticsResponse> getStatisticsByFaculty() {
+        List<Object[]> results = issueRepository.countActiveIssuesByFaculty();
+        return results.stream()
+                .map(result -> new StatisticsResponse((String) result[0], (Long) result[1]))
+                .collect(Collectors.toList());
+    }
+}
+```
+
+#### **Repository untuk Menghitung Jumlah Kasus Aktif**
+Tambahkan query di repository untuk menghitung jumlah kasus aktif berdasarkan fakultas.
+
+```java
+public interface IssueRepository extends JpaRepository<IssueModel, Long> {
+
+    @Query("SELECT r.faculty, COUNT(i) FROM IssueModel i JOIN i.room r WHERE i.status IN ('new', 'in progress') GROUP BY r.faculty")
+    List<Object[]> countActiveIssuesByFaculty();
+}
+```
+
+### 2. **View di Thymeleaf untuk Statistik**
+Buat template HTML yang akan menampilkan data dalam bentuk tabel menggunakan DataTables dan grafik batang menggunakan Chart.js.
+
+#### **HTML untuk Statistik (statistics.html)**
+```html
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Statistik Kasus Aktif per Fakultas</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<nav th:replace="~{fragments/fragment::navbar(~{::home})}"></nav>
+
+<div class="container">
+    <h1>Statistik Kasus Aktif per Fakultas</h1>
+
+    <!-- Tabel Statistik -->
+    <table id="statisticsTable" class="display">
+        <thead>
+            <tr>
+                <th>Fakultas</th>
+                <th>Jumlah Kasus</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data akan diisi oleh JavaScript -->
+        </tbody>
+    </table>
+
+    <!-- Chart Statistik -->
+    <h2>Chart</h2>
+    <canvas id="statisticsChart" width="400" height="200"></canvas>
+</div>
+
+<script>
+    // Menggunakan AJAX untuk mendapatkan data dari REST API
+    $(document).ready(function() {
+        $.ajax({
+            url: '/api/lapor/statistics',
+            method: 'GET',
+            success: function(data) {
+                // Isi tabel DataTables
+                var table = $('#statisticsTable').DataTable();
+                data.forEach(function(item) {
+                    table.row.add([item.fakultas, item.jumlahKasus]).draw();
+                });
+
+                // Membuat Chart.js
+                var ctx = document.getElementById('statisticsChart').getContext('2d');
+                var chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.map(item => item.fakultas),
+                        datasets: [{
+                            label: 'Jumlah Kasus Aktif',
+                            data: data.map(item => item.jumlahKasus),
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
+```
+
+### 3. **Library yang Digunakan**
+- **DataTables**: Library ini akan membuat tabel lebih interaktif dengan sorting, searching, dan pagination.
+- **Chart.js**: Digunakan untuk menampilkan data dalam bentuk chart atau grafik batang.
+
+### 4. **URL Mapping**
+- Untuk mengakses halaman statistik, kamu bisa menggunakan URL:
+  ```
+  http://localhost:8080/report/statistics
+  ```
+- REST API dapat diakses dengan URL:
+  ```
+  http://localhost:8080/api/lapor/statistics
+  ```
+
+### Penjelasan:
+1. **REST API**: Mengembalikan data statistik jumlah kasus aktif per fakultas.
+2. **DataTables**: Tabel akan otomatis diisi dengan data statistik dari REST API menggunakan JavaScript.
+3. **Chart.js**: Data yang sama digunakan untuk membuat grafik batang yang menunjukkan jumlah kasus aktif per fakultas.
+
+---------------------------------------------
+### Fitur #10 – Mengubah Setter/Field Injection menjadi Constructor Dependency Injection
+
+**Dependency Injection (DI)** adalah pola desain di mana objek disediakan oleh framework (seperti Spring) alih-alih objek membuat dependensinya sendiri. Menggunakan **Constructor Injection** lebih dianjurkan daripada **Setter/Field Injection** karena lebih aman dan memungkinkan objek menjadi immutable setelah dibuat. Berikut adalah langkah-langkah untuk mengubah Setter/Field Injection ke Constructor Injection.
+
+#### **Contoh Sebelum: Field Injection atau Setter Injection**
+Misalnya kamu memiliki `IssueService` yang di-inject menggunakan Field Injection atau Setter Injection:
+
+**Field Injection:**
+```java
+@Service
+public class IssueService {
+
+    @Autowired
+    private IssueRepository issueRepository;
+
+}
+```
+
+**Setter Injection:**
+```java
+@Service
+public class IssueService {
+
+    private IssueRepository issueRepository;
+
+    @Autowired
+    public void setIssueRepository(IssueRepository issueRepository) {
+        this.issueRepository = issueRepository;
+    }
+
+    // Logika lainnya...
+}
+```
+
+#### **Mengubah Menjadi Constructor Injection**
+Untuk mengubahnya menjadi **Constructor Injection**, hapus anotasi `@Autowired` pada field atau setter, dan injeksikan dependensi melalui constructor:
+
+```java
+@Service
+public class IssueService {
+
+    private final IssueRepository issueRepository;
+
+    // Constructor Injection
+    public IssueService(IssueRepository issueRepository) {
+        this.issueRepository = issueRepository;
+    }
+
+    // Logika lainnya...
+}
+```
+
+### Mengapa Constructor Injection Lebih Baik?
+1. **Immutability**: Field yang di-inject melalui constructor dapat dibuat `final`, sehingga tidak bisa berubah setelah objek dibuat.
+2. **Testability**: Constructor Injection lebih mudah untuk diujikan karena kamu bisa dengan mudah membuat instance menggunakan mock tanpa memerlukan Spring Context.
+3. **Null Safety**: Dengan Constructor Injection, kamu dapat memaksa dependensi disediakan pada saat pembuatan objek, sehingga menghindari `NullPointerException`.
+
